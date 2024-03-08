@@ -1,62 +1,103 @@
+import React, { useState, useRef, useCallback } from "react";
 import ReactFlow, {
-  Controls,
-  Background,
-  applyEdgeChanges,
-  applyNodeChanges,
+  ReactFlowProvider,
   addEdge,
+  useNodesState,
+  useEdgesState,
+  Controls,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { useState, useCallback } from "react";
 
-const initialNodes = [
+import Sidebar from "./Sidebar";
+
+import "../index.css";
+import SideNav from "../../Sidenav";
+
+let initialNodes = [
   {
     id: "1",
-    position: { x: 0, y: 0 },
-    data: { label: "Moksh parashar" },
     type: "input",
-  },
-  {
-    id: "2",
-    position: { x: 150, y: 150 },
-    data: { label: "Adarsh sharma" },
+    data: { label: "input node" },
+    position: { x: 250, y: 5 },
   },
 ];
-const initialEdges = [];
-function Flow() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
 
-  const onNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
-  );
-  const onEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
+let id = 0;
+const getId = () => `dndnode_${id++}`;
+
+const Flow = () => {
+  const reactFlowWrapper = useRef(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     []
   );
 
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      if (event.target.innerText === "input node") {
+        const newNode = initialNodes[0].data;
+        initialNodes = [{ ...newNode, label: "send SMS" }];
+        console.log(initialNodes);
+        setNodes(initialNodes);
+      }
+      const type = event.dataTransfer.getData("application/reactflow");
+
+      // check if the dropped element is valid
+      if (typeof type === "undefined" || !type) {
+        return;
+      }
+
+      // reactFlowInstance.project was renamed to reactFlowInstance.screenToFlowPosition
+      // and you don't need to subtract the reactFlowBounds.left/top anymore
+      // details: https://reactflow.dev/whats-new/2023-11-10
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const newNode = {
+        id: getId(),
+        type,
+        position,
+        data: { label: `${type} node` },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [reactFlowInstance]
+  );
+
   return (
-    <div
-      style={{ height: "100%" }}
-      className="w-full border-solid border-red-500 border-2 ml-52"
-    >
-      <ReactFlow
-        nodes={nodes}
-        onNodesChange={onNodesChange}
-        edges={edges}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+    <div className="dndflow">
+      <ReactFlowProvider>
+        <div className="reactflow-wrapper" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            fitView
+          >
+            <Controls />
+          </ReactFlow>
+        </div>
+        <SideNav />
+      </ReactFlowProvider>
     </div>
   );
-}
+};
 
 export default Flow;

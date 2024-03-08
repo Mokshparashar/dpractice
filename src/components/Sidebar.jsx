@@ -1,14 +1,19 @@
 import { MdDragHandle, MdMarkEmailUnread } from "react-icons/md";
 
 import { IoClose } from "react-icons/io5";
+import { useGlobalContext } from "../context/globalContext";
 
 function Sidebar({ setIsSidebarOpen, isSidebarOpen, isHamburgerClick }) {
+  let { data } = useGlobalContext();
   function handleDrag(e) {
-    console.log(e.target.__reactProps$7ijtq9t19zj.defaultValue);
+    const item = e.target.attributes.value.value;
+    console.log(item);
+    data = [{ ...data, value: item }];
+    console.log(data);
   }
   return (
     <div
-      className={`w-64 h-full bg-gray-800 absolute top-0 z-10 left-0 
+      className={`w-72 h-full bg-gray-800 relative top-0 z-10 left-0 
        
       `}
     >
@@ -28,7 +33,7 @@ function Sidebar({ setIsSidebarOpen, isSidebarOpen, isHamburgerClick }) {
           className="w-20 flex flex-col items-center justify-center"
           onDrag={handleDrag}
           draggable={true}
-          defaultValue="email"
+          value="email"
         >
           <div className="bg-green-500 p-2 rounded-full w-10 h-10 flex items-center justify-center flex-col">
             <MdMarkEmailUnread className="text-white text-xl  " />
