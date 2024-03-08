@@ -40,7 +40,10 @@ function Flow() {
   );
 
   return (
-    <div style={{ height: "100%" }}>
+    <div
+      style={{ height: "100%" }}
+      className="w-full border-solid border-red-500 border-2 ml-52"
+    >
       <ReactFlow
         nodes={nodes}
         onNodesChange={onNodesChange}
